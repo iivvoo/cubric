@@ -66,7 +66,9 @@ class Environment(object):
 
     def connect(self, host):
         self.host = host
-        self.session = self.host.session()
+
+    def disconnect(self):
+        self.host.close()
 
     def issue_command(self, command, *args, nonzero=False):
 
@@ -135,6 +137,7 @@ class DeploymentBase(object):
 
     def deploy(self, hosts):
         for host in hosts:
+            print("Deploying to host {0}".format(host))
             env = Environment(self.config)
             for toolclass in self.requires:
                 # if toolclass is a tuple, it probably has an alternative name
@@ -156,6 +159,8 @@ class DeploymentBase(object):
 
             self.run(env)
             env.run_tasks()
+            env.disconnect()
+            print("Host {0} complete".format(host))
 
 
 class Tool(object):
