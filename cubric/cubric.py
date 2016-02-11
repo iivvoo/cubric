@@ -1,4 +1,3 @@
-import paramiko
 from contextlib import contextmanager
 import os
 import time
@@ -26,33 +25,6 @@ class NonZero(CubricException):
 
 class TemplateException(CubricException):
     pass
-
-
-def issue_command(transport, command, pause=1):
-    chan = transport.open_session()
-    chan.exec_command(command)
-
-    buff_size = 1024
-    stdout = b""
-    stderr = b""
-
-    while not chan.exit_status_ready():
-        time.sleep(pause)
-        if chan.recv_ready():
-            stdout += chan.recv(buff_size)
-
-        if chan.recv_stderr_ready():
-            stderr += chan.recv_stderr(buff_size)
-
-    exit_status = chan.recv_exit_status()
-    # Need to gobble up any remaining output after program terminates...
-    while chan.recv_ready():
-        stdout += chan.recv(buff_size)
-
-    while chan.recv_stderr_ready():
-        stderr += chan.recv_stderr(buff_size)
-
-    return exit_status, stdout, stderr
 
 
 class UndoChdir:
@@ -89,15 +61,6 @@ class Environment(object):
         for t in self.tasks:
             t()
         self.tasks = []
-
-    def _connect(self, host):
-        self.client = paramiko.client.SSHClient()
-        self.client.set_missing_host_key_policy(
-            paramiko.AutoAddPolicy())
-        self.client.load_system_host_keys()
-        self.client.load_host_keys(os.path.expanduser("~/.ssh/known_hosts"))
-        self.client.connect(host)
-        self.transport = self.client.get_transport()
 
     def connect(self, host):
         self.host = host
