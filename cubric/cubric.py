@@ -40,13 +40,12 @@ class UndoChdir:
 
     def __exit__(self, t, v, tb):
         print("Resetting cwd to", self.old)
-        self.env.cwd = self.old
+        self.env.host.cwd.chdir(self.old)
 
 
 class Environment(object):
 
     def __init__(self, config=None):
-        self.cwd = '.'
         self._sudo = False
         self.tasks = []
         self.env = {}
@@ -68,7 +67,9 @@ class Environment(object):
         self.host = host
 
     def disconnect(self):
-        self.host.close()
+        if self.host != local:
+            self.host.close()
+        self.host = None
 
     def issue_command(self, command, *args, nonzero=False):
 
@@ -76,8 +77,6 @@ class Environment(object):
 
         if nonzero:
             kw['retcode'] = None
-
-        self.host.cwd.chdir(self.cwd)
 
         try:
             cmd = self.host[command]
@@ -94,7 +93,6 @@ class Environment(object):
         print("COMMAND", command, args)
         if nonzero:
             print("NONZERO: Ignoring return codes")
-        print("CWD", self.cwd)
         print("REPORTED CWD", self.host.cwd)
         out = self.issue_command(command, *args, nonzero=nonzero)
         if out:
@@ -102,7 +100,7 @@ class Environment(object):
 
     def chdir(self, dir):
         oldcwd = self.host.cwd
-        self.cwd = os.path.join(self.cwd, dir)
+        self.host.cwd.chdir(dir)
         return UndoChdir(self, oldcwd)
 
     def mkdir(self, dir, chdir=False):
