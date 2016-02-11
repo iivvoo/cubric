@@ -17,7 +17,8 @@ with open('HISTORY.md') as history_file:
 requirements = [
     'jinja2==2.8',
     'paramiko==1.16.0',
-    'path.py==8.1.2'
+    'path.py==8.1.2',
+    'plumbum==1.6.1.post0'
 
 ]
 
