@@ -28,7 +28,9 @@ class TemplateException(CubricException):
 
 
 class UndoChdir:
-
+    """
+        context manager that can restore the old cwd on __exit__
+    """
     def __init__(self, env, old):
         self.env = env
         self.old = old
@@ -51,7 +53,7 @@ class Environment(object):
         self.config = config or BaseConfig()
 
     def set(self, key, var):
-        self.env[key] = var
+        self.host.env[key] = var
 
     def register_task(self, task, **args):
         # XXX TODO: check of task not already in queue, store args
@@ -67,15 +69,12 @@ class Environment(object):
         self.session = self.host.session()
 
     def issue_command(self, command, *args, nonzero=False):
-        # self.session.run(command)
-        # import pdb; pdb.set_trace()
 
         kw = {}
 
         if nonzero:
             kw['retcode'] = None
 
-        print("issue_command: cd to ", self.cwd)
         self.host.cwd.chdir(self.cwd)
 
         try:
@@ -89,17 +88,6 @@ class Environment(object):
 
     def _run(self, command, *args, nonzero=False):
         """ run and handle a command """
-        # if self._sudo:
-        #     complete_command = "cd {0} && sudo {1}".format(self.cwd, command)
-        # else:
-        #     complete_command = "cd {0} && {1}".format(self.cwd, command)
-        # if self.env:
-        #     env = " ".join("{0}={1}".format(k, shlex.quote(v))
-        #                    for (k, v) in self.env.items())
-        #     complete_command = "export {0}\n{1}".format(env, complete_command)
-        # status, out, err = issue_command(self.transport, complete_command)
-        for (k, v) in self.env.items():
-            self.host.env[k] = v
         print("===================================")
         print("COMMAND", command, args)
         if nonzero:
@@ -107,15 +95,8 @@ class Environment(object):
         print("CWD", self.cwd)
         print("REPORTED CWD", self.host.cwd)
         out = self.issue_command(command, *args, nonzero=nonzero)
-        # print("COMPLETE COMMAND", complete_command)
-        # print("STATUS", status)
         if out:
             print("OUT", out)
-        # if err:
-            # print("ERR", err.decode("utf8"))
-
-        # if status != 0:
-            # raise CommandFailedException("Aborting, see above")
 
     def chdir(self, dir):
         oldcwd = self.host.cwd
