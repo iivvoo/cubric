@@ -1,3 +1,6 @@
+import plumbum
+import tempfile
+
 from path import Path
 
 from jinja2 import Template as J2Template, TemplateSyntaxError
@@ -30,9 +33,9 @@ class Template(Tool):
         rendered = template.render(vars)
         # TODO: check md5sums, if changed (or missing), copy file
 
-        # XXX Move to env class, make it log some output
-        s = self.env.client.open_sftp()
-        with s.file(dst, "w") as out:
-            out.write(rendered)
+        with tempfile.NamedTemporaryFile() as fp:
+            fp.write(rendered.encode('utf8'))
+            fp.flush()
 
+            plumbum.path.utils.copy(fp.name, self.env.host.path(dst))
         return self

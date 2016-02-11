@@ -13,7 +13,7 @@ class Postgres(Tool):
     def pgexecute(self, command):
         # some quote escaping magic.
         command = command.replace("'", r"'\''")
-        self.env.command("echo '{0};' | psql postgres".format(command))
+        self.env.command("psql", "postgres", "-c", command)
 
     def user(self, username, password=None, superuser=False, state=PRESENT):
 

@@ -3,6 +3,8 @@ from contextlib import contextmanager
 import os
 import time
 import shlex
+from plumbum.machines.paramiko_machine import ParamikoMachine
+from plumbum import local, ProcessExecutionError
 
 """
     Look into plumbum for remote execution (does it do remote env?)
@@ -15,6 +17,10 @@ class CubricException(Exception):
 
 
 class CommandFailedException(CubricException):
+    pass
+
+
+class NonZero(CubricException):
     pass
 
 
@@ -49,6 +55,20 @@ def issue_command(transport, command, pause=1):
     return exit_status, stdout, stderr
 
 
+class UndoChdir:
+
+    def __init__(self, env, old):
+        self.env = env
+        self.old = old
+
+    def __enter__(self):
+        pass
+
+    def __exit__(self, t, v, tb):
+        print("Resetting cwd to", self.old)
+        self.env.cwd = self.old
+
+
 class Environment(object):
 
     def __init__(self, config=None):
@@ -70,7 +90,7 @@ class Environment(object):
             t()
         self.tasks = []
 
-    def connect(self, host):
+    def _connect(self, host):
         self.client = paramiko.client.SSHClient()
         self.client.set_missing_host_key_policy(
             paramiko.AutoAddPolicy())
@@ -79,49 +99,81 @@ class Environment(object):
         self.client.connect(host)
         self.transport = self.client.get_transport()
 
-    def _run(self, command):
-        """ run and handle a command """
-        if self._sudo:
-            complete_command = "cd {0} && sudo {1}".format(self.cwd, command)
-        else:
-            complete_command = "cd {0} && {1}".format(self.cwd, command)
-        if self.env:
-            env = " ".join("{0}={1}".format(k, shlex.quote(v))
-                           for (k, v) in self.env.items())
-            complete_command = "export {0}\n{1}".format(env, complete_command)
-        status, out, err = issue_command(self.transport, complete_command)
-        print("===================================")
-        print("COMMAND", command)
-        print("COMPLETE COMMAND", complete_command)
-        print("CWD", self.cwd)
-        print("STATUS", status)
-        if out:
-            print("OUT", out.decode("utf8"))
-        if err:
-            print("ERR", err.decode("utf8"))
+    def connect(self, host):
+        self.host = host
+        self.session = self.host.session()
 
-        if status != 0:
-            raise CommandFailedException("Aborting, see above")
+    def issue_command(self, command, *args, nonzero=False):
+        # self.session.run(command)
+        # import pdb; pdb.set_trace()
+
+        kw = {}
+
+        if nonzero:
+            kw['retcode'] = None
+
+        print("issue_command: cd to ", self.cwd)
+        self.host.cwd.chdir(self.cwd)
+
+        try:
+            cmd = self.host[command]
+
+            if self._sudo:
+                return self.host["sudo"][cmd](*args, **kw)
+            return cmd(*args, **kw)
+        except ProcessExecutionError:
+            raise NonZero()
+
+    def _run(self, command, *args, nonzero=False):
+        """ run and handle a command """
+        # if self._sudo:
+        #     complete_command = "cd {0} && sudo {1}".format(self.cwd, command)
+        # else:
+        #     complete_command = "cd {0} && {1}".format(self.cwd, command)
+        # if self.env:
+        #     env = " ".join("{0}={1}".format(k, shlex.quote(v))
+        #                    for (k, v) in self.env.items())
+        #     complete_command = "export {0}\n{1}".format(env, complete_command)
+        # status, out, err = issue_command(self.transport, complete_command)
+        for (k, v) in self.env.items():
+            self.host.env[k] = v
+        print("===================================")
+        print("COMMAND", command, args)
+        if nonzero:
+            print("NONZERO: Ignoring return codes")
+        print("CWD", self.cwd)
+        print("REPORTED CWD", self.host.cwd)
+        out = self.issue_command(command, *args, nonzero=nonzero)
+        # print("COMPLETE COMMAND", complete_command)
+        # print("STATUS", status)
+        if out:
+            print("OUT", out)
+        # if err:
+            # print("ERR", err.decode("utf8"))
+
+        # if status != 0:
+            # raise CommandFailedException("Aborting, see above")
 
     def chdir(self, dir):
+        oldcwd = self.host.cwd
         self.cwd = os.path.join(self.cwd, dir)
+        return UndoChdir(self, oldcwd)
 
     def mkdir(self, dir, chdir=False):
-        self._run("mkdir -p {0}\n".format(dir))
+        self._run("mkdir", "-p", dir)
         if chdir:
             self.chdir(dir)
 
     def chown(self, path, owner=None, group=None):
         if owner or group:
             ownergroup = "{0}:{1}".format(owner or '', group or '')
-            self._run("chown {owner} {path}".format(
-                path=path, owner=ownergroup))
+            self._run("chown", ownergroup, path)
 
     def chmod(self, path, mode):
-        self._run("chmod {mode} {path}".format(mode=mode, path=path))
+        self._run("chmod", mode, path)
 
-    def command(self, command):
-        self._run(command)
+    def command(self, command, *args, nonzero=False):
+        self._run(command, *args, nonzero=nonzero)
 
     @contextmanager
     def sudo(self, user=None):
@@ -152,7 +204,12 @@ class DeploymentBase(object):
                 tool.preflight_check()
                 setattr(self, name, tool)
 
-            env.connect(host)
+            if host == "_localhost_":
+                env.connect(local)
+            else:
+                remote = ParamikoMachine(host)
+                env.connect(remote)
+
             self.run(env)
             env.run_tasks()
 

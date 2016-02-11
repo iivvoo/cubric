@@ -1,4 +1,4 @@
-from .cubric import Tool
+from .cubric import Tool, NonZero
 
 
 class File(Tool):
@@ -9,7 +9,10 @@ class File(Tool):
         if type == File.DIR:
             self.env.mkdir(path)
         elif type == File.FILE:
-            self.env.command("test -e {0} || touch {0}".format(path))
+            try:
+                self.env.command("test", "-e", path)
+            except NonZero:
+                self.env.command("touch", path)
         if mode:
             self.env.chmod(path, mode)
         if user or group:
