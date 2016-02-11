@@ -28,12 +28,12 @@ A code snippet says more than a thousand words.
                 .install("zc.buildout==2.5.0") \
                 .install("setuptools")
 
-            env.command("bin/buildout -c development.cfg")
+            env.command("bin/buildout", "-c", "development.cfg")
 
         def django_update(self, env):
             """ update database, etc """
             env.chdir(pj(self.config.instancepath, self.config.project))
-            env.command("bin/django migrate")
+            env.command("bin/django", "migrate")
 
         def run(self, env):
 
