@@ -3,6 +3,12 @@ from .cubric import Tool, NonZero
 
 class Git(Tool):
 
+    def shorthash(self, folder):
+        """ return short commit hash of current head """
+        res = self.env.command("git", "show", "--oneline", "-q")
+        with self.env.chdir(folder):
+            return res.split(None, 1)[0]
+
     def cloneup(self, repo, folder, branch="master", tag=None, commit=None):
         """ clone or update a repo
             TODO: if folder is None -> derive from repo

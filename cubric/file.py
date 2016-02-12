@@ -4,8 +4,16 @@ from .cubric import Tool, NonZero
 class File(Tool):
     DIR = 1
     FILE = 2
+    LINK = 3
 
-    def present(self, path, type=DIR, mode=None, user=None, group=None):
+    def present(self, path, type=DIR, mode=None, user=None, group=None,
+                target=None):
+        if type == File.LINK:
+            if target:
+                self.env.command("ln", "-sfn", path, target)
+            else:
+                self.env.command("ln", "-sfn", path)
+            return self
         if type == File.DIR:
             self.env.mkdir(path)
         elif type == File.FILE:

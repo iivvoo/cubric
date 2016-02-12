@@ -97,6 +97,7 @@ class Environment(object):
         out = self.issue_command(command, *args, nonzero=nonzero)
         if out:
             print("OUT", out)
+        return out
 
     def chdir(self, dir):
         oldcwd = self.host.cwd
@@ -117,7 +118,7 @@ class Environment(object):
         self._run("chmod", mode, path)
 
     def command(self, command, *args, nonzero=False):
-        self._run(command, *args, nonzero=nonzero)
+        return self._run(command, *args, nonzero=nonzero)
 
     @contextmanager
     def sudo(self, user=None):
