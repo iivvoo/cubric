@@ -5,11 +5,6 @@ import shlex
 from plumbum.machines.paramiko_machine import ParamikoMachine
 from plumbum import local, ProcessExecutionError
 
-"""
-    Look into plumbum for remote execution (does it do remote env?)
-    Look in (some) path module -> somepath / 'foo'
-"""
-
 
 class CubricException(Exception):
     pass
@@ -48,11 +43,12 @@ class Environment(object):
     def __init__(self, config=None):
         self._sudo = False
         self.tasks = []
-        self.env = {}
+        self.env = {} # used in templates
         self.config = config or BaseConfig()
 
     def set(self, key, var):
         self.host.env[key] = var
+        self.env[key] = var
 
     def register_task(self, task, **args):
         # XXX TODO: check of task not already in queue, store args
