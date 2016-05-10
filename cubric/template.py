@@ -9,7 +9,7 @@ from .cubric import Tool, TemplateException
 
 class Template(Tool):
 
-    def create(self, src, dst, args):
+    def create(self, src, dst, args, **kwargs):
         # fullargs = args.copy()
         # fullargs['cubric'] = 'managed by Cubric'
 
@@ -29,6 +29,8 @@ class Template(Tool):
         vars = args.dict()
         vars['ENV'] = [{"key": k, "value": v}
                        for (k, v) in self.env.env.items()]
+
+        vars.update(kwargs)
 
         rendered = template.render(vars)
         # TODO: check md5sums, if changed (or missing), copy file
