@@ -42,8 +42,9 @@ class Environment(object):
 
     def __init__(self, config=None):
         self._sudo = False
+        self._sudouser = None
         self.tasks = []
-        self.env = {} # used in templates
+        self.env = {}  # used in templates
         self.config = config or BaseConfig()
 
     def set(self, key, var):
@@ -78,7 +79,11 @@ class Environment(object):
             cmd = self.host[command]
 
             if self._sudo:
-                return self.host["sudo"][cmd](*args, **kw)
+                if self._sudouser:
+                    sudo = self.host["sudo"]["-u", self._sudouser]
+                    return sudo[cmd](*args, **kw)
+                else:
+                    return self.host["sudo"][cmd](*args, **kw)
             return cmd(*args, **kw)
         except ProcessExecutionError:
             raise NonZero()
@@ -100,8 +105,10 @@ class Environment(object):
         self.host.cwd.chdir(dir)
         return UndoChdir(self, oldcwd)
 
-    def mkdir(self, dir, chdir=False):
+    def mkdir(self, dir, chdir=False, owner=None):
         self._run("mkdir", "-p", dir)
+        if owner:
+            self.chown(dir, owner=owner, group=owner)
         if chdir:
             self.chdir(dir)
 
@@ -119,9 +126,12 @@ class Environment(object):
     @contextmanager
     def sudo(self, user=None):
         oldsudo = self._sudo
+        olduser = self._sudouser
         self._sudo = True
+        self._sudouser = user
         yield
         self._sudo = oldsudo
+        self._sudouser = olduser
 
 
 class DeploymentBase(object):
@@ -149,7 +159,10 @@ class DeploymentBase(object):
             if host == "_localhost_":
                 env.connect(local)
             else:
-                remote = ParamikoMachine(host)
+                user = None
+                if '@' in host:
+                    user, host = host.split("@")
+                remote = ParamikoMachine(host, user=user)
                 env.connect(remote)
 
             self.run(env)

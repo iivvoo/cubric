@@ -22,7 +22,7 @@ class Postgres(Tool):
         else:
             # this may produce an SQL error if the user exists.
             try:
-                self.pgexecute('CREATE ROLE "{0}"  '.format(username))
+                self.pgexecute('CREATE ROLE "{0}" WITH LOGIN '.format(username))
             except NonZero:
                 pass
             if password:
