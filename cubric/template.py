@@ -4,7 +4,7 @@ import tempfile
 from path import Path
 
 from jinja2 import Template as J2Template, TemplateSyntaxError
-from .cubric import Tool
+from .cubric import Tool, TemplateException
 
 
 class Template(Tool):
