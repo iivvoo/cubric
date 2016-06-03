@@ -33,8 +33,5 @@ class File(Tool):
     def removed(self, path):
         if not os.path.exists(path):
             return self
-        if os.path.isdir(path):
-            shutil.rmtree(path, ignore_errors=True)
-        else:
-            os.unlink(path)
+        self.env.command("rm", "-rf", path)
         return self
