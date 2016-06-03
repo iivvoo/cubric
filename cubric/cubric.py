@@ -2,6 +2,8 @@ from contextlib import contextmanager
 import os
 import time
 import shlex
+import paramiko
+
 from plumbum.machines.paramiko_machine import ParamikoMachine
 from plumbum import local, ProcessExecutionError
 
@@ -162,7 +164,8 @@ class DeploymentBase(object):
                 user = None
                 if '@' in host:
                     user, host = host.split("@")
-                remote = ParamikoMachine(host, user=user)
+                remote = ParamikoMachine(host, user=user,
+                                  missing_host_policy=paramiko.AutoAddPolicy())
                 env.connect(remote)
 
             self.run(env)
