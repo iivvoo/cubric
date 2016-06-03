@@ -26,3 +26,12 @@ class File(Tool):
         if user or group:
             self.env.chown(path, user, group)
         return self
+
+    def removed(self, path):
+        if not os.path.exists(path):
+            return self
+        if os.path.isdir(path):
+            shutil.rmtree(path, ignore_errors=True)
+        else:
+            os.unlink(path)
+        return self
