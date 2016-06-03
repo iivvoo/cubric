@@ -8,6 +8,15 @@ import datetime
 class EmberLocalBuild(DeploymentBase):
     requires = (Git, File)
 
+    _ember_env = "demo"
+
+    @property
+    def ember_env(self):
+        try:
+            return self.config.ember_env
+        except AttributeError:
+            return self._ember_env
+
     def sync_repo(self, env):
         self.git.cloneup(self.config.repo, self.config.project)
 
@@ -19,8 +28,7 @@ class EmberLocalBuild(DeploymentBase):
             env.command("node", "-v")
             env.command("npm", "install")
             env.command("bower", "install")
-            # env.command("ember", "build", "--env=production")
-            env.command("ember", "build", "--env=demo")
+            env.command("ember", "build", "--env={}".format(self.ember_env))
 
 
 class EmberDeploy(DeploymentBase):
@@ -35,7 +43,9 @@ class EmberDeploy(DeploymentBase):
             - Setup / update nginx
         """
 
-        env.mkdir(self.config.instancepath, chdir=True)
+        with env.sudo():
+            env.mkdir(self.config.instancepath, chdir=True,
+                      owner=self.config.user)
         # Not usable, works remotely not local!
         # print("Hash", self.git.shorthash(self.config.project))
 
