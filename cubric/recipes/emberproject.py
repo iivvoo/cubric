@@ -6,12 +6,13 @@ import datetime
 
 
 class EmberLocalBuild(DeploymentBase):
-    requires = (Git, )
+    requires = (Git, File)
 
     def sync_repo(self, env):
         self.git.cloneup(self.config.repo, self.config.project)
 
     def run(self, env):
+        self.file.removed(self.config.project)
         self.sync_repo(env)
         with env.chdir(self.config.project):
             print("Using node:")
