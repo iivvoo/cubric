@@ -23,7 +23,8 @@ class DRFProjectDeployment(DeploymentBase):
             self.postgres.database(self.config.db_name, self.config.db_user)
 
     def git_buildout(self, env):
-        self.git.cloneup(self.config.repo, self.config.project)
+        self.git.cloneup(self.config.repo, self.config.project,
+                         branch=self.config.branch)
 
         env.chdir(self.config.project)
         self.venv.create() \
@@ -140,6 +141,7 @@ class DRFProjectDeployment(DeploymentBase):
 class DRFProjectConfig(BaseConfig):
     environment = "dev"
     projectname = "acmeproject"
+    branch = "master"
 
     @property
     def projectid(self):
