@@ -1,0 +1,4 @@
+- allow config options to be overridden on commandline
+- register deployments/steps, allow for individual selection
+
+e.g. deploy_django_app branch=topic123 user=whatever -basesystem
