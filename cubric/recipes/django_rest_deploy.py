@@ -55,7 +55,7 @@ class DRFProjectDeployment(DeploymentBase):
                     args=self.config,
                     program="run_huey",
                     command=command)
-        self.supervisor.install(svhueypath, "{0}-huey".format(
+        self.supervisor.install(svhueypath, "{0}-run_huey".format(
             self.config.projectid))
 
     def setup_celery(self, env):
