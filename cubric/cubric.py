@@ -46,6 +46,7 @@ class Environment(object):
         self._sudo = False
         self._sudouser = None
         self.tasks = []
+        self.task_keys = set()
         self.env = {}  # used in templates
         self.config = config or BaseConfig()
 
@@ -53,8 +54,14 @@ class Environment(object):
         self.host.env[key] = var
         self.env[key] = var
 
-    def register_task(self, task, **args):
-        # XXX TODO: check of task not already in queue, store args
+    def register_task(self, task, key=None, **args):
+        # If a key is specified, make sure the associated task is only
+        # scheduled once
+        if key and key in self.task_keys:
+            return
+        elif key:
+            self.task_keys.add(key)
+
         self.tasks.append(task)
 
     def run_tasks(self):

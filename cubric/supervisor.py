@@ -12,7 +12,11 @@ class Supervisor(Tool):
             self.env.command("supervisorctl", "update")
 
     def reload(self):
-        self.env.register_task(self.do_reload)
+        self.env.register_task(self.do_reload, key="supervisor-update")
+
+    def do_restart(self, name):
+        with self.env.sudo():
+            self.env.command("supervisorctl", "restart", name)
 
     def install(self, src, name):
         with self.env.sudo():
@@ -21,3 +25,4 @@ class Supervisor(Tool):
                              .format(name=name))
         # XXX only if something changed
         self.reload()
+        self.env.register_task(lambda: self.do_restart(name), key="supervisor-restart-"+name)
