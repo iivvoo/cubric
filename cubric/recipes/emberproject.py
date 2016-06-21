@@ -28,7 +28,7 @@ class EmberLocalBuild(DeploymentBase):
             print("Using node:")
             env.command("node", "-v")
             env.command("npm", "install")
-            env.command("bower", "install")
+            env.command("bower", "install", "--allow-root")
             env.command("ember", "build", "--env={}".format(self.ember_env))
 
 
