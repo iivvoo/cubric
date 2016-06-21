@@ -18,7 +18,8 @@ class EmberLocalBuild(DeploymentBase):
             return self._ember_env
 
     def sync_repo(self, env):
-        self.git.cloneup(self.config.repo, self.config.project)
+        self.git.cloneup(self.config.repo, self.config.project,
+                         self.config.branch)
 
     def run(self, env):
         self.file.removed(self.config.project)
