@@ -1,5 +1,5 @@
 import os
-import shutil
+from plumbum.path.utils import copy
 
 from .cubric import Tool, NonZero
 
@@ -8,6 +8,12 @@ class File(Tool):
     DIR = 1
     FILE = 2
     LINK = 3
+
+    def _fixattrs(self, file, mode, user, group):
+        if mode:
+            self.env.chmod(file, mode)
+        if user or group:
+            self.env.chown(file, user, group)
 
     def present(self, path, type=DIR, mode=None, user=None, group=None,
                 target=None):
@@ -24,10 +30,7 @@ class File(Tool):
                 self.env.command("test", "-e", path)
             except NonZero:
                 self.env.command("touch", path)
-        if mode:
-            self.env.chmod(path, mode)
-        if user or group:
-            self.env.chown(path, user, group)
+        self._fixattrs(path, mode, user, group)
         return self
 
     def removed(self, path):
@@ -36,6 +39,14 @@ class File(Tool):
         self.env.command("rm", "-rf", path)
         return self
 
-    def create(self, file, content):
+    def create(self, file, content, mode=None, user=None, group=None):
         """ create a file with content """
         self.env.shell("echo '{0}' > {1}".format(content, file))
+        self._fixattrs(file, mode, user, group)
+        return self
+
+    def copy(self, src, dst, mode=None, user=None, group=None):
+        dst = self.env.host.path(dst)
+        copy(src, dst)
+        self._fixattrs(dst, mode, user, group)
+        return self

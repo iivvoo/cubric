@@ -22,3 +22,10 @@ class Users(Tool):
         File(self.env).present(dir, type=File.DIR, mode="700", user=user)
         self.env.shell("grep '{0}' {1} || "
                        "echo '{0}' >> {1}".format(data, path))
+
+    def add_privkey(self, user, keyfile, dst):
+        file = File(self.env)
+        dir = "/home/{0}/.ssh/".format(user)
+
+        file.copy(keyfile, dir + "id_rsa", mode="0600", user=user)
+        return self
