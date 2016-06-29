@@ -12,5 +12,6 @@ from .template import Template
 from .git import Git
 from .supervisor import Supervisor
 from .ubuntu import Ubuntu
+from .users import Users
 from .virtualenv import Venv
 from .nginx import NGINX

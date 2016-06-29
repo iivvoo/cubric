@@ -35,3 +35,7 @@ class File(Tool):
             return self
         self.env.command("rm", "-rf", path)
         return self
+
+    def create(self, file, content):
+        """ create a file with content """
+        self.env.shell("echo '{0}' > {1}".format(content, file))

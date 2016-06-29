@@ -15,7 +15,8 @@ class Postgres(Tool):
         # command = command.replace("'", r"'\''")
         self.env.command("psql", "postgres", "-c", command, nonzero=nonzero)
 
-    def user(self, username, password=None, superuser=False, state=PRESENT):
+    def user(self, username, password=None, superuser=False,
+             createdb=False, state=PRESENT):
 
         if state == Postgres.REMOVED:
             self.pgexecute('DROP ROLE IF EXISTS "{0}"'.format(username))
@@ -36,6 +37,13 @@ class Postgres(Tool):
             else:
                 self.pgexecute('ALTER USER "{0}" WITH NOSUPERUSER'
                                .format(username))
+            if createdb:
+                self.pgexecute('ALTER USER "{0}" WITH CREATEDB'
+                               .format(username))
+            else:
+                self.pgexecute('ALTER USER "{0}" WITH NOCREATEDB'
+                               .format(username))
+
 
         return self
 

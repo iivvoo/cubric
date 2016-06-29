@@ -132,6 +132,9 @@ class Environment(object):
     def command(self, command, *args, nonzero=False):
         return self._run(command, *args, nonzero=nonzero)
 
+    def shell(self, command):
+        return self._run("/bin/bash", "-c", command)
+
     @contextmanager
     def sudo(self, user=None):
         oldsudo = self._sudo
