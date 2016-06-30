@@ -23,9 +23,16 @@ class Users(Tool):
         self.env.shell("grep '{0}' {1} || "
                        "echo '{0}' >> {1}".format(data, path))
 
-    def add_privkey(self, user, keyfile, dst):
+    def add_privkey(self, user, keyfile, dst="id_rsa"):
         file = File(self.env)
         dir = "/home/{0}/.ssh/".format(user)
 
-        file.copy(keyfile, dir + "id_rsa", mode="0600", user=user)
+        file.copy(keyfile, dir + dst, mode="0600", user=user)
+        return self
+
+    def add_knownhosts(self, user, hostsfile, dst="known_hosts"):
+        file = File(self.env)
+        dir = "/home/{0}/.ssh/".format(user)
+
+        file.copy(hostsfile, dir + dst, mode="0600", user=user)
         return self
