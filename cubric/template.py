@@ -1,10 +1,11 @@
 import plumbum
 import tempfile
+import inspect
 
 from path import Path
 
 from jinja2 import Template as J2Template, TemplateSyntaxError
-from .cubric import Tool, TemplateException
+from .cubric import Tool, TemplateException, NotFoundException
 
 
 class Template(Tool):
@@ -13,12 +14,20 @@ class Template(Tool):
         # fullargs = args.copy()
         # fullargs['cubric'] = 'managed by Cubric'
 
-        try:
-            dir = Path(__file__).dirname()
-            data = open(dir / src, "r").read()
-        except FileNotFoundError:
-            data = open(src, "r").read()
+        caller = inspect.stack()[1]
+        callerbase = Path(caller.filename).dirname()
 
+        tries = (callerbase / src, Path(__file__).dirname() / src, src)
+
+        for t in tries:
+            try:
+                data = open(t, "r").read()
+                break
+            except FileNotFoundError:
+                pass
+        else:
+            raise NotFoundException("Could not find/resolve {0} to a template"
+                                    .format(src))
         try:
             template = J2Template(data)
         except TemplateSyntaxError as e:

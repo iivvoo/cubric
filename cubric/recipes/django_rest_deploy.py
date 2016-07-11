@@ -39,6 +39,7 @@ class DRFProjectDeployment(DeploymentBase):
         # XXX Wrap this in some command, with collectstatic, etc
         env.chdir(pj(self.config.instancepath, self.config.project))
         env.command("bin/django", "migrate", "--noinput")
+        env.command("bin/django", "collectstatic", "--noinput")
 
     def setup_huey(self, env):
         # install redis
@@ -87,6 +88,8 @@ class DRFProjectDeployment(DeploymentBase):
         self.setup_database(env)
 
         env.set("DATABASE_URL", self.config.database_url)
+        env.set("PROJECT_HOME", pj(self.config.instancepath,
+                                   self.config.project))
         env.set("BROKER_URL",
                 "ampq://{env}:{env}:5672/{env}"
                 .format(env=self.config.environment))
@@ -126,7 +129,7 @@ class DRFProjectDeployment(DeploymentBase):
             .create(src="templates/uwsgi.conf",
                     dst=pj(self.config.instancepath, "uwsgi.conf"),
                     args=self.config) \
-            .create(src="templates/nginx.conf",
+            .create(src="templates/nginx-drf.conf",
                     dst=nginxpath,
                     args=self.config)
         self.supervisor.install(svcpath, "{0}-uwsgi".format(
