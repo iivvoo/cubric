@@ -54,6 +54,7 @@ class Environment(object):
         self.task_keys = set()
         self.env = {}  # used in templates
         self.config = config or BaseConfig()
+        self.last_result = False
 
     def set(self, key, var):
         self.host.env[key] = var

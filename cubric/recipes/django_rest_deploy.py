@@ -41,6 +41,10 @@ class DRFProjectDeployment(DeploymentBase):
         env.command("bin/django", "migrate", "--noinput")
         env.command("bin/django", "collectstatic", "--noinput")
 
+    def restart_redis(self, env):
+        with env.sudo():
+            env.command("/etc/init.d/redis-server", "restart")
+
     def setup_huey(self, env):
         # install redis
         # config redis
@@ -56,6 +60,14 @@ class DRFProjectDeployment(DeploymentBase):
                     args=self.config,
                     program="run_huey",
                     command=command)
+        self.template \
+            .create(src="templates/redis.conf",
+                    dst="/etc/redis/redis.conf",
+                    sudo=True,
+                    args=self.config)
+        if env.last_result:
+            env.register_task(lambda: self.restart_redis(env), key="redis-restart")
+
         self.supervisor.install(svhueypath, "{0}-run_huey".format(
             self.config.projectid))
 

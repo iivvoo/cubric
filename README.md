@@ -75,3 +75,11 @@ A code snippet says more than a thousand words.
 
 The class above will, if configured/invoked correctly git clone/update a repo,
 run buildout, setup database, supervisor, nginx and uwsgi on a remote host.
+
+## Issue's, todo's
+
+env.last_result holds the result of the last action but it's currently only used by
+Template.create, and it doesn't get reset between action calls.
+
+Either give up on chaining and just return results or have actions require a decorator
+that sets/clears last_result?
