@@ -16,7 +16,8 @@ class Template(Tool):
         # fullargs['cubric'] = 'managed by Cubric'
 
         caller = inspect.stack()[1]
-        callerbase = Path(caller.filename).dirname()
+        filename = caller[1]  # caller.filename is a 3.5ism
+        callerbase = Path(filename).dirname()
 
         tries = (callerbase / src, Path(__file__).dirname() / src, src)
 
@@ -64,7 +65,8 @@ class Template(Tool):
                 fp.flush()
 
                 if sudo:
-                    plumbum.path.utils.copy(fp.name, self.env.host.path(tmpname))
+                    plumbum.path.utils.copy(
+                        fp.name, self.env.host.path(tmpname))
                     with self.env.sudo():
                         self.env.command("mv", tmpname, dst)
 
