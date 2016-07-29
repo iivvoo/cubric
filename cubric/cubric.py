@@ -20,6 +20,10 @@ class NonZero(CubricException):
     pass
 
 
+class NotFoundException(CubricException):
+    pass
+
+
 class TemplateException(CubricException):
     pass
 
@@ -28,6 +32,7 @@ class UndoChdir:
     """
         context manager that can restore the old cwd on __exit__
     """
+
     def __init__(self, env, old):
         self.env = env
         self.old = old
@@ -49,6 +54,7 @@ class Environment(object):
         self.task_keys = set()
         self.env = {}  # used in templates
         self.config = config or BaseConfig()
+        self.last_result = False
 
     def set(self, key, var):
         self.host.env[key] = var
@@ -175,7 +181,7 @@ class DeploymentBase(object):
                 if '@' in host:
                     user, host = host.split("@")
                 remote = ParamikoMachine(host, user=user,
-                                  missing_host_policy=paramiko.AutoAddPolicy())
+                                         missing_host_policy=paramiko.AutoAddPolicy())
                 env.connect(remote)
 
             self.run(env)

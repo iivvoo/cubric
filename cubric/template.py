@@ -1,24 +1,35 @@
 import plumbum
 import tempfile
+import inspect
+import hashlib
 
 from path import Path
 
 from jinja2 import Template as J2Template, TemplateSyntaxError
-from .cubric import Tool, TemplateException
+from .cubric import Tool, TemplateException, NotFoundException, NonZero
 
 
 class Template(Tool):
 
-    def create(self, src, dst, args, **kwargs):
+    def create(self, src, dst, args, sudo=False, **kwargs):
         # fullargs = args.copy()
         # fullargs['cubric'] = 'managed by Cubric'
 
-        try:
-            dir = Path(__file__).dirname()
-            data = open(dir / src, "r").read()
-        except FileNotFoundError:
-            data = open(src, "r").read()
+        caller = inspect.stack()[1]
+        filename = caller[1]  # caller.filename is a 3.5ism
+        callerbase = Path(filename).dirname()
 
+        tries = (callerbase / src, Path(__file__).dirname() / src, src)
+
+        for t in tries:
+            try:
+                data = open(t, "r").read()
+                break
+            except FileNotFoundError:
+                pass
+        else:
+            raise NotFoundException("Could not find/resolve {0} to a template"
+                                    .format(src))
         try:
             template = J2Template(data)
         except TemplateSyntaxError as e:
@@ -35,9 +46,31 @@ class Template(Tool):
         rendered = template.render(vars)
         # TODO: check md5sums, if changed (or missing), copy file
 
-        with tempfile.NamedTemporaryFile() as fp:
-            fp.write(rendered.encode('utf8'))
-            fp.flush()
+        m = hashlib.md5()
+        m.update(rendered.encode('utf8'))
+        md5sum = m.hexdigest()
 
-            plumbum.path.utils.copy(fp.name, self.env.host.path(dst))
+        changed = True
+        try:
+            res = self.env.command("md5sum", dst)
+            remotesum = res.split()[0]
+            changed = (remotesum != md5sum)
+        except NonZero:
+            changed = False
+
+        if changed:
+            tmpname = "/tmp/{0}".format(next(tempfile._get_candidate_names()))
+            with tempfile.NamedTemporaryFile() as fp:
+                fp.write(rendered.encode('utf8'))
+                fp.flush()
+
+                if sudo:
+                    plumbum.path.utils.copy(
+                        fp.name, self.env.host.path(tmpname))
+                    with self.env.sudo():
+                        self.env.command("mv", tmpname, dst)
+
+                else:
+                    plumbum.path.utils.copy(fp.name, self.env.host.path(dst))
+        self.env.last_result = changed
         return self

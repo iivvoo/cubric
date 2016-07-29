@@ -39,6 +39,11 @@ class DRFProjectDeployment(DeploymentBase):
         # XXX Wrap this in some command, with collectstatic, etc
         env.chdir(pj(self.config.instancepath, self.config.project))
         env.command("bin/django", "migrate", "--noinput")
+        env.command("bin/django", "collectstatic", "--noinput")
+
+    def restart_redis(self, env):
+        with env.sudo():
+            env.command("/etc/init.d/redis-server", "restart")
 
     def setup_huey(self, env):
         # install redis
@@ -55,6 +60,14 @@ class DRFProjectDeployment(DeploymentBase):
                     args=self.config,
                     program="run_huey",
                     command=command)
+        self.template \
+            .create(src="templates/redis.conf",
+                    dst="/etc/redis/redis.conf",
+                    sudo=True,
+                    args=self.config)
+        if env.last_result:
+            env.register_task(lambda: self.restart_redis(env), key="redis-restart")
+
         self.supervisor.install(svhueypath, "{0}-run_huey".format(
             self.config.projectid))
 
@@ -128,7 +141,7 @@ class DRFProjectDeployment(DeploymentBase):
             .create(src="templates/uwsgi.conf",
                     dst=pj(self.config.instancepath, "uwsgi.conf"),
                     args=self.config) \
-            .create(src="templates/nginx.conf",
+            .create(src="templates/nginx-drf.conf",
                     dst=nginxpath,
                     args=self.config)
         self.supervisor.install(svcpath, "{0}-uwsgi".format(

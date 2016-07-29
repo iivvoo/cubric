@@ -75,3 +75,18 @@ A code snippet says more than a thousand words.
 
 The class above will, if configured/invoked correctly git clone/update a repo,
 run buildout, setup database, supervisor, nginx and uwsgi on a remote host.
+
+## Issue's, todo's
+
+env.last_result holds the result of the last action but it's currently only used by
+Template.create, and it doesn't get reset between action calls.
+
+Either give up on chaining and just return results or have actions require a decorator
+that sets/clears last_result?
+
+Currently we mostly execute remote shell commands. This is rather primitive, difficult to
+parse and it's not always possible/easy to use full shell constructs (e.g. pipes, redirection)
+
+Life would be much easier if we could invoke python remotely. A possiblity for this might be
+a remove server/daemon (that's started/stopped by cubric on demand) that communicates/forwards
+over an ssh-tunneled port 
