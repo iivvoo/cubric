@@ -32,7 +32,7 @@ class DRFProjectDeployment(DeploymentBase):
             .install("zc.buildout==2.5.0") \
             .install("setuptools")
 
-        env.command("bin/buildout", "-c", "development.cfg")
+        env.command("bin/buildout", "-c", self.config.buildoutcfg)
 
     def django_update(self, env):
         """ update database, etc """
@@ -157,6 +157,7 @@ class DRFProjectConfig(BaseConfig):
     environment = "dev"
     projectname = "acmeproject"
     branch = "master"
+    buildoutcfg = "development.cfg"
 
     @property
     def projectid(self):
