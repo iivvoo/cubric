@@ -44,7 +44,6 @@ class Template(Tool):
         vars.update(kwargs)
 
         rendered = template.render(vars)
-        # TODO: check md5sums, if changed (or missing), copy file
 
         m = hashlib.md5()
         m.update(rendered.encode('utf8'))
@@ -56,7 +55,7 @@ class Template(Tool):
             remotesum = res.split()[0]
             changed = (remotesum != md5sum)
         except NonZero:
-            changed = False
+            changed = True
 
         if changed:
             tmpname = "/tmp/{0}".format(next(tempfile._get_candidate_names()))
