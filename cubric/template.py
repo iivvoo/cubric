@@ -2,6 +2,7 @@ import plumbum
 import tempfile
 import inspect
 import hashlib
+import os
 
 from path import Path
 
@@ -18,8 +19,9 @@ class Template(Tool):
         caller = inspect.stack()[1]
         filename = caller[1]  # caller.filename is a 3.5ism
         callerbase = Path(filename).dirname()
+        cwd = Path(os.getcwd())
 
-        tries = (callerbase / src, Path(__file__).dirname() / src, src)
+        tries = (cwd / src, callerbase / src, Path(__file__).dirname() / src, src)
 
         for t in tries:
             try:
