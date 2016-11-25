@@ -24,7 +24,7 @@ class DRFProjectDeployment(DeploymentBase):
 
     def git_buildout(self, env):
         self.git.cloneup(self.config.repo, self.config.project,
-                         branch=self.config.branch)
+                            branch=self.config.branch)
 
         env.chdir(self.config.project)
         self.venv.create() \
@@ -66,7 +66,8 @@ class DRFProjectDeployment(DeploymentBase):
                     sudo=True,
                     args=self.config)
         if env.last_result:
-            env.register_task(lambda: self.restart_redis(env), key="redis-restart")
+            env.register_task(lambda: self.restart_redis(
+                env), key="redis-restart")
 
         self.supervisor.install(svhueypath, "{0}-run_huey".format(
             self.config.projectid))
@@ -110,14 +111,15 @@ class DRFProjectDeployment(DeploymentBase):
             env.mkdir(self.config.instancepath, chdir=True,
                       owner=self.config.user)
 
-        self.git_buildout(env)
+        with env.sudo(self.config.user):
+            self.git_buildout(env)
 
-        self.django_update(env)
+            self.django_update(env)
 
-        env.chdir(self.config.instancepath)
+            env.chdir(self.config.instancepath)
 
-        for d in ("logs", "run", "static", "media", "www"):
-            env.mkdir(pj(self.config.instancepath, d))
+            for d in ("logs", "run", "static", "media", "www"):
+                env.mkdir(pj(self.config.instancepath, d))
         with env.sudo():
             self.file.present(pj(self.config.instancepath, "run"),
                               type=File.DIR,
@@ -132,18 +134,19 @@ class DRFProjectDeployment(DeploymentBase):
         uwsgiconfpath = pj(self.config.instancepath, "uwsgi.conf")
         uwsgicommand = "{0} --ini {1}".format(
                        self.config.uwsgi, uwsgiconfpath)
-        self.template \
-            .create(src="templates/supervisor-program.conf",
-                    dst=svcpath,
-                    args=self.config,
-                    command=uwsgicommand,
-                    program="uwsgi") \
-            .create(src="templates/uwsgi.conf",
-                    dst=pj(self.config.instancepath, "uwsgi.conf"),
-                    args=self.config) \
-            .create(src="templates/nginx-drf.conf",
-                    dst=nginxpath,
-                    args=self.config)
+        with env.sudo(self.config.user):
+            self.template \
+                .create(src="templates/supervisor-program.conf",
+                        dst=svcpath,
+                        args=self.config,
+                        command=uwsgicommand,
+                        program="uwsgi") \
+                .create(src="templates/uwsgi.conf",
+                        dst=pj(self.config.instancepath, "uwsgi.conf"),
+                        args=self.config) \
+                .create(src="templates/nginx-drf.conf",
+                        dst=nginxpath,
+                        args=self.config)
         self.supervisor.install(svcpath, "{0}-uwsgi".format(
             self.config.projectid))
 
