@@ -13,6 +13,13 @@ from .cubric import Tool, TemplateException, NotFoundException, NonZero
 class Template(Tool):
 
     def create(self, src, dst, args, sudo=False, **kwargs):
+        """
+            Copy a local file 'src' to a remote file 'dst'. If sudo is True,
+            copy it to a remote temp folder first before moving it as superuser
+            since we can only copy under the current remote user.
+
+            kwargs is used for rendering the template
+        """
         # fullargs = args.copy()
         # fullargs['cubric'] = 'managed by Cubric'
 
@@ -65,11 +72,14 @@ class Template(Tool):
                 fp.write(rendered.encode('utf8'))
                 fp.flush()
 
-                if sudo:
+                if sudo or self.env._sudo:
                     plumbum.path.utils.copy(
                         fp.name, self.env.host.path(tmpname))
                     with self.env.sudo():
                         self.env.command("mv", tmpname, dst)
+                        # if sudo to a specific user, fix ownership
+                        if self.env._sudo:
+                            self.env.chown(dst, self.env._sudouser)
 
                 else:
                     plumbum.path.utils.copy(fp.name, self.env.host.path(dst))

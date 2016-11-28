@@ -24,7 +24,7 @@ class DRFProjectDeployment(DeploymentBase):
 
     def git_buildout(self, env):
         self.git.cloneup(self.config.repo, self.config.project,
-                            branch=self.config.branch)
+                         branch=self.config.branch)
 
         env.chdir(self.config.project)
         self.venv.create() \
@@ -151,9 +151,9 @@ class DRFProjectDeployment(DeploymentBase):
             self.config.projectid))
 
         # self.setup_celery(env)
-        self.setup_huey(env)
-
-        self.nginx.install(nginxpath, self.config.projectid)
+        with env.sudo(self.config.user):
+            self.setup_huey(env)
+            self.nginx.install(nginxpath, self.config.projectid)
 
 
 class DRFProjectConfig(BaseConfig):

@@ -26,6 +26,10 @@ class Venv(Tool):
             except NonZero:
                 self.env.command("virtualenv", "--system-site-packages",
                                  "-p", self.python, path)
+        # chdir to the venv so relative bin/pip works. Better owuld be
+        # to encapsulate the environment a bit more
+        self.env.chdir(path)
+        # "return self.clone(pwd=path)" or something like that
         return self
 
     def install(self, package):

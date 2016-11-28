@@ -95,10 +95,10 @@ class Environment(object):
 
             if self._sudo:
                 if self._sudouser:
-                    sudo = self.host["sudo"]["-u", self._sudouser]
+                    sudo = self.host["sudo"]["-E", "-u", self._sudouser]
                     return sudo[cmd](*args, **kw)
                 else:
-                    return self.host["sudo"][cmd](*args, **kw)
+                    return self.host["sudo"]["-E"][cmd](*args, **kw)
             return cmd(*args, **kw)
         except ProcessExecutionError:
             raise NonZero()
