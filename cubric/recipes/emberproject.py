@@ -51,16 +51,22 @@ class EmberDeploy(DeploymentBase):
         # print("Hash", self.git.shorthash(self.config.project))
 
         tsfolder = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
-        for d in ("logs", tsfolder):
-            env.mkdir(self.config.instancepath / d)
+        tmpfile = Path("/tmp") / tsfolder
+
         plumbum.path.utils.copy(Path(self.config.project) / 'dist',
-                                env.host.path(self.config.instancepath
-                                              / tsfolder))
-        self.file.present(self.config.instancepath / tsfolder,
-                          target=self.config.instancepath / 'www',
-                          type=File.LINK)
-        self.template.create(src="templates/emberapp-nginx.conf",
-                             dst=self.config.instancepath / 'nginx.conf',
-                             args=self.config)
-        self.nginx.install(self.config.instancepath / 'nginx.conf',
-                           self.config.projectid)
+                                env.host.path(tmpfile))
+        with env.sudo():
+            env.chown(tmpfile, owner=self.config.user, recursive=True)
+            env.move(tmpfile, self.config.instancepath / tsfolder)
+
+        with env.sudo(self.config.user):
+            for d in ("logs", tsfolder):
+                env.chown(self.config.instancepath / d, owner=self.config.user)
+            self.file.present(self.config.instancepath / tsfolder,
+                              target=self.config.instancepath / 'www',
+                              type=File.LINK)
+            self.template.create(src="templates/emberapp-nginx.conf",
+                                 dst=self.config.instancepath / 'nginx.conf',
+                                 args=self.config)
+            self.nginx.install(self.config.instancepath / 'nginx.conf',
+                               self.config.projectid)

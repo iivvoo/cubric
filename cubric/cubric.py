@@ -127,10 +127,16 @@ class Environment(object):
         if chdir:
             self.chdir(dir)
 
-    def chown(self, path, owner=None, group=None):
+    def chown(self, path, owner=None, group=None, recursive=False):
         if owner or group:
             ownergroup = "{0}:{1}".format(owner or '', group or '')
-            self._run("chown", ownergroup, path)
+            if recursive:
+                self._run("chown", "-R", ownergroup, path)
+            else:
+                self._run("chown", ownergroup, path)
+
+    def move(self, src, dest):
+        self._run("mv", src, dest)
 
     def chmod(self, path, mode):
         self._run("chmod", mode, path)
