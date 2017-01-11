@@ -112,14 +112,14 @@ class DRFProjectDeployment(DeploymentBase):
                       owner=self.config.user)
 
         with env.sudo(self.config.user):
+            for d in ("logs", "run", "static", "media", "www"):
+                env.mkdir(pj(self.config.instancepath, d))
             self.git_buildout(env)
 
             self.django_update(env)
 
             env.chdir(self.config.instancepath)
 
-            for d in ("logs", "run", "static", "media", "www"):
-                env.mkdir(pj(self.config.instancepath, d))
         with env.sudo():
             self.file.present(pj(self.config.instancepath, "run"),
                               type=File.DIR,
