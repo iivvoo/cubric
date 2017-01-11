@@ -44,9 +44,12 @@ class EmberDeploy(DeploymentBase):
             - Setup / update nginx
         """
 
+        logpath = self.config.instancepath / 'logs'
         with env.sudo():
+            env.mkdir(logpath, owner=self.config.user)
             env.mkdir(self.config.instancepath, chdir=True,
                       owner=self.config.user)
+
         # Not usable, works remotely not local!
         # print("Hash", self.git.shorthash(self.config.project))
 
