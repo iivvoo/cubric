@@ -27,12 +27,12 @@ class Users(Tool):
         file = File(self.env)
         dir = "/home/{0}/.ssh/".format(user)
 
-        file.copy(keyfile, dir + dst, mode="0600", user=user)
+        file.copy_owner(keyfile, dir + dst, mode="0600", user=user)
         return self
 
     def add_knownhosts(self, user, hostsfile, dst="known_hosts"):
         file = File(self.env)
         dir = "/home/{0}/.ssh/".format(user)
 
-        file.copy(hostsfile, dir + dst, mode="0600", user=user)
+        file.copy_owner(hostsfile, dir + dst, mode="0600", user=user)
         return self

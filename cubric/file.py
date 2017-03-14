@@ -1,4 +1,6 @@
 import os
+import tempfile
+
 from plumbum.path.utils import copy
 
 from .cubric import Tool, NonZero
@@ -50,3 +52,16 @@ class File(Tool):
         copy(src, dst)
         self._fixattrs(dst, mode, user, group)
         return self
+
+    def copy_owner(self, src, dst, mode=None, user=None, group=None):
+        """ copy with sudo """
+        tmpname = "/tmp/{0}".format(next(tempfile._get_candidate_names()))
+
+        copy(src, self.env.host.path(tmpname))
+        with self.env.sudo():
+            self.env.command("mv", tmpname, dst)
+            # if sudo to a specific user, fix ownership
+            if self.env._sudo:
+                self.env.chown(dst, self.env._sudouser)
+            elif user:
+                self.env.chown(dst, user)

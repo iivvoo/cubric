@@ -72,6 +72,7 @@ class Template(Tool):
                 fp.write(rendered.encode('utf8'))
                 fp.flush()
 
+                # file.copy_owner ?
                 if sudo or self.env._sudo:
                     plumbum.path.utils.copy(
                         fp.name, self.env.host.path(tmpname))
