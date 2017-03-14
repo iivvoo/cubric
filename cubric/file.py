@@ -61,7 +61,5 @@ class File(Tool):
         with self.env.sudo():
             self.env.command("mv", tmpname, dst)
             # if sudo to a specific user, fix ownership
-            if self.env._sudo:
-                self.env.chown(dst, self.env._sudouser)
-            elif user:
-                self.env.chown(dst, user)
+            owner = self.env._sudouser or user
+            self._fixattrs(dst, mode, owner, group)
