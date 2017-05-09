@@ -161,6 +161,7 @@ class DRFProjectConfig(BaseConfig):
     projectname = "acmeproject"
     branch = "master"
     buildoutcfg = "development.cfg"
+    # workers = 1
 
     @property
     def projectid(self):
