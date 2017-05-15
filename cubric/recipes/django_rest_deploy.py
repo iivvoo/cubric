@@ -13,6 +13,9 @@ Use Path module for path manipulation? (in stead of pj hack)
 
 class DRFProjectDeployment(DeploymentBase):
     # local install wkhtmltopdf
+    supervisor_app_tpl = "templates/supervisor-program.conf"
+    uwsgi_app_tpl = "templates/uwsgi.conf"
+    nginx_vhost_tpl = "templates/nginx-drf.conf"
 
     requires = (Venv, Template, Supervisor, File, NGINX, Git, Postgres,
                 Ubuntu)
@@ -134,17 +137,18 @@ class DRFProjectDeployment(DeploymentBase):
         uwsgiconfpath = pj(self.config.instancepath, "uwsgi.conf")
         uwsgicommand = "{0} --ini {1}".format(
                        self.config.uwsgi, uwsgiconfpath)
+
         with env.sudo(self.config.user):
             self.template \
-                .create(src="templates/supervisor-program.conf",
+                .create(src=self.supervisor_app_tpl,
                         dst=svcpath,
                         args=self.config,
                         command=uwsgicommand,
                         program="uwsgi") \
-                .create(src="templates/uwsgi.conf",
+                .create(src=self.uwsgi_app_tpl,
                         dst=pj(self.config.instancepath, "uwsgi.conf"),
                         args=self.config) \
-                .create(src="templates/nginx-drf.conf",
+                .create(src=self.nginx_vhost_tpl,
                         dst=nginxpath,
                         args=self.config)
         self.supervisor.install(svcpath, "{0}-uwsgi".format(
