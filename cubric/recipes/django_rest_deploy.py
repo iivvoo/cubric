@@ -106,9 +106,10 @@ class DRFProjectDeployment(DeploymentBase):
         env.set("DATABASE_URL", self.config.database_url)
         env.set("PROJECT_HOME", pj(self.config.instancepath,
                                    self.config.project))
-        env.set("BROKER_URL",
-                "ampq://{env}:{env}:5672/{env}"
-                .format(env=self.config.environment))
+        # for celery
+        # env.set("BROKER_URL",
+        #         "ampq://{env}:{env}:5672/{env}"
+        #         .format(env=self.config.environment))
 
         with env.sudo():
             env.mkdir(self.config.instancepath, chdir=True,
