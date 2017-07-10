@@ -105,6 +105,7 @@ class DRFProjectDeployment(DeploymentBase):
 
         self.setup_database(env)
 
+        env.set("SECRET_KEY", self.config.secret_key)
         env.set("DATABASE_URL", self.config.database_url)
         env.set("PROJECT_HOME", pj(self.config.instancepath,
                                    self.config.project))
