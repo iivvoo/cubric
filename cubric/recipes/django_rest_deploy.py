@@ -57,6 +57,8 @@ class DRFProjectDeployment(DeploymentBase):
         command = pj(self.config.instancepath, self.config.project,
                      "bin", "django") + " run_huey"
 
+        if hasattr(self.config, 'huey_args'):
+            command += " " + self.config.huey_args
         self.template \
             .create(src="templates/supervisor-program.conf",
                     dst=svhueypath,
