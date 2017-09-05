@@ -28,18 +28,25 @@ class EmberLocalBuild(DeploymentBase):
             print("Using node:")
             env.command("node", "-v")
             use_yarn = False
+            use_bower = True
             try:
                 use_yarn = self.config.yarn
+            except AttributeError:
+                pass
+            try:
+                use_bower = self.config.bower
             except AttributeError:
                 pass
 
             if use_yarn:
                 env.command("npm", "install", "-g", "yarn")
-                env.command("npm", "install", "-g", "bower")
+                if use_bower:
+                    env.command("npm", "install", "-g", "bower")
                 env.command("yarn", "install")
             else:
                 env.command("npm", "install")
-            env.command("bower", "install", "--allow-root")
+            if use_bower:
+                env.command("bower", "install", "--allow-root")
             env.command("node_modules/.bin/ember", "build", "--env={}".format(self.ember_env))
 
 
