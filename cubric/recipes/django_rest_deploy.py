@@ -32,7 +32,7 @@ class DRFProjectDeployment(DeploymentBase):
         env.chdir(self.config.project)
         self.venv.create() \
             .create() \
-            .install("zc.buildout==2.5.0") \
+            .install("zc.buildout==2.9.5") \
             .install("setuptools")
 
         env.command("bin/buildout", "-c", self.config.buildoutcfg)
