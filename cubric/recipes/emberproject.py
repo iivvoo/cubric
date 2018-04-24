@@ -39,15 +39,17 @@ class EmberLocalBuild(DeploymentBase):
                 pass
 
             if use_yarn:
-                env.command("npm", "install", "-g", "yarn")
+                env.command("npm", "install", "yarn")
                 if use_bower:
-                    env.command("npm", "install", "-g", "bower")
-                env.command("yarn", "install")
+                    env.command("npm", "install", "bower")
+                env.command("./node_modules/.bin/yarn", "install")
             else:
                 env.command("npm", "install")
             if use_bower:
-                env.command("bower", "install", "--allow-root")
-            env.command("node_modules/.bin/ember", "build", "--env={}".format(self.ember_env))
+                env.command("./node_modules/.bin/bower",
+                            "install", "--allow-root")
+            env.command("./node_modules/.bin/ember", "build", "--env={}"
+                        .format(self.ember_env))
 
 
 class EmberDeploy(DeploymentBase):

@@ -25,8 +25,8 @@ class VueLocalBuild(DeploymentBase):
                 pass
 
             if use_yarn:
-                env.command("npm", "install", "-g", "yarn")
-                env.command("yarn", "install")
+                env.command("npm", "install", "yarn")
+                env.command("./node_modules/.bin/yarn", "install")
             else:
                 env.command("npm", "install")
 
